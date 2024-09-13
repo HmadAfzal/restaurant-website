@@ -35,9 +35,9 @@ Savoria is a restaurant website built to provide an interactive and user-friendl
 
 1. **🌌 Clone the Repository:**
 
-   ```bash
-   https://github.com/HmadAfzal/restaurant-website.git
-   ```
+```bash
+https://github.com/HmadAfzal/restaurant-website.git
+```
 
 
 2. **👨‍💻 Install Dependencies:**
