@@ -4,7 +4,6 @@ type User {
     username: String!
     email: String!
     password:String!
-    profilePicture:String
   }
 
 type Query {
@@ -21,6 +20,7 @@ input SignupInput {
     username: String!
     email: String!
     password:String! 
+    confirmPassword:String!
 }
 
 input LoginInput {
