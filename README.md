@@ -88,7 +88,7 @@ npm run dev
 cd client
 npm run dev
 ```
-The frontend should now be available at http://localhost:3000, and the backend API at http://localhost:4000/graphql.
+The frontend should now be available at http://localhost:5173, and the backend API at http://localhost:4000/graphql.
 
 
 ## Screenshots
