@@ -96,6 +96,8 @@ The frontend should now be available at http://localhost:3000, and the backend A
 ![App Screenshot](/client/public/signup.png)
 ![App Screenshot](/client/public/login.png)
 ![App Screenshot](/client/public/login.png)
+![App Screenshot](/client/public/sidebar.png)
+
 
 
 ## Contact
