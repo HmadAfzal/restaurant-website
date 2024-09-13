@@ -1,35 +1,43 @@
+import express from 'express';
+import cors from 'cors';
 import { ApolloServer } from '@apollo/server';
 import { expressMiddleware } from '@apollo/server/express4';
 import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer';
-import express from 'express';
 import http from 'http';
-import cors from 'cors';
+import cookieParser from 'cookie-parser';
 import userTypeDefs from './typedefs/user.typedefs.js';
 import userResolvers from './resolvers/user.resolver.js';
-interface MyContext {
-  token?: string;
-}
 
 const app = express();
 const httpServer = http.createServer(app);
 
+// Configure CORS
+app.use(
+  cors({
+    origin: 'http://localhost:5173',
+    credentials: true,
+  })
+);
 
-const server = new ApolloServer<MyContext>({
-  typeDefs:userTypeDefs,
-  resolvers:userResolvers,
+app.use(cookieParser());
+
+const server = new ApolloServer({
+  typeDefs: userTypeDefs,
+  resolvers: userResolvers,
   plugins: [ApolloServerPluginDrainHttpServer({ httpServer })],
 });
 
 await server.start();
 
-
 app.use(
   '/graphql',
-  cors<cors.CorsRequest>(),
   express.json(),
   expressMiddleware(server, {
-    context: async ({ req,res }) => ({ token: req.headers.token, res }),
-  }),
+    context: async ({ req, res }) => {
+      const token = req.cookies?.jwt;
+      return { token, req, res };
+    },
+  })
 );
 
 await new Promise<void>((resolve) => httpServer.listen({ port: 4000 }, resolve));

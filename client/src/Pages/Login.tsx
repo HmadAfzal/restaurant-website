@@ -1,40 +1,52 @@
-import { useState } from 'react'
-import { ChevronLeft } from 'lucide-react'
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Alert, AlertDescription } from "@/components/ui/alert"
+import { useState } from 'react';
+import { ChevronLeft, Loader2 } from 'lucide-react';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { LOGIN } from '@/graphql/mutations/user.mutations';
+import { useMutation } from '@apollo/client';
+import { toast } from '@/hooks/use-toast';
 
 export default function LoginPage() {
+
     const [formData, setFormData] = useState({
         email: '',
         password: '',
-        rememberMe: false,
-    })
-    const [error, setError] = useState<string | null>(null)
+    });
+    const [error, setError] = useState<string | null>(null);
+    const [login,{loading}] = useMutation(LOGIN,{refetchQueries:['GET_USER']});
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const { name, value, type, checked } = e.target
+        const { name, value } = e.target;
         setFormData(prevData => ({
             ...prevData,
-            [name]: type === 'checkbox' ? checked : value
-        }))
-    }
+            [name]: value,
+        }));
+    };
 
-    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault()
-        setError(null)
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        setError(null);
 
         if (!formData.email || !formData.password) {
-            setError("Please enter both email and password")
-            return
+            setError("Please enter both email and password");
+            return;
         }
 
-        // Here you would typically send the login request to your backend
-        console.log('Login attempt:', formData)
-        // Reset form after successful submission (in a real app, you'd redirect on successful login)
-        setFormData({ email: '', password: '', rememberMe: false })
-    }
+        try {
+          await login({ variables: { input: formData } });
+          window.location.href = '/';
+                setFormData({ email: '', password: '' });
+        } catch (error) {
+            console.error('Login error:', error);
+            toast({
+                title: "Error",
+                description: 'Incorrect credentials',
+                variant: 'destructive'
+            });
+        }
+    };
 
     return (
         <div className="min-h-screen bg-gray-900 text-white flex flex-col">
@@ -82,10 +94,8 @@ export default function LoginPage() {
                             />
                         </div>
 
-
-
-                        <Button type="submit" className="w-full bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-semibold">
-                            Log In
+                        <Button type="submit" className="w-full bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-semibold" disabled={loading}>
+                        {loading ? <Loader2 className='animate-spin size-5' /> : 'Login'}
                         </Button>
                     </form>
 
@@ -102,5 +112,5 @@ export default function LoginPage() {
                 <p>&copy; {new Date().getFullYear()} Savoria. All rights reserved.</p>
             </footer>
         </div>
-    )
+    );
 }

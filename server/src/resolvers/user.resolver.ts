@@ -1,9 +1,45 @@
 import prisma from "../db/prisma.js";
 import bcrypt from "bcryptjs";
 import genJwtToken from "../utils/genjJwtToken.js";
+import jwt, { JwtPayload } from "jsonwebtoken";
+
+interface DecodedToken extends JwtPayload {
+  id: string;
+}
 
 const userResolvers = {
-  Query: {},
+  Query: {
+    user: async (_, args, { req, res }) => {
+      try {
+        const token = req.cookies?.jwt;
+        if (!token) {
+          throw new Error("Unauthorized - No token found");
+        }
+
+        const decodedUser = jwt.verify(
+          token,
+          process.env.JWT_SECRET!
+        ) as DecodedToken;
+        if (!decodedUser) {
+          throw new Error("Unauthorized - Invalid Token");
+        }
+
+        const user = await prisma.user.findUnique({
+          where: { id: decodedUser.id },
+          select: { id: true, username: true, email: true },
+        });
+
+        if (!user) {
+          throw new Error("User not found");
+        }
+
+        return user;
+      } catch (error) {
+        console.log("Error in  getting user", error.message);
+        throw new Error(error);
+      }
+    },
+  },
   Mutation: {
     signup: async (_, { input }, { res }) => {
       try {

@@ -1,46 +1,62 @@
-import { useState } from 'react'
-import { ChevronLeft } from 'lucide-react'
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Alert, AlertDescription } from "@/components/ui/alert"
+import { useState } from 'react';
+import { ChevronLeft, Loader2 } from 'lucide-react';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { SIGNUP } from '@/graphql/mutations/user.mutations';
+import { useMutation } from '@apollo/client';
+import { useToast } from '@/hooks/use-toast';
 
 export default function SignupPage() {
+    const { toast } = useToast();
+
     const [formData, setFormData] = useState({
-        name: '',
+        username: '',
         email: '',
         password: '',
         confirmPassword: '',
-    })
-    const [errors, setErrors] = useState<string[]>([])
+    });
+    const [errors, setErrors] = useState<string[]>([]);
+    
+    const [signup, { loading, error: signupError }] = useMutation(SIGNUP,{refetchQueries:['GET_USER']});
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const { name, value } = e.target
+        const { name, value } = e.target;
         setFormData(prevData => ({
             ...prevData,
-            [name]: value
-        }))
-    }
+            [name]: value,
+        }));
+    };
 
-    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault()
-        const newErrors = []
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        const newErrors: string[] = [];
 
-        if (!formData.name) newErrors.push("Name is required")
-        if (!formData.email) newErrors.push("Email is required")
-        if (!formData.password) newErrors.push("Password is required")
-        if (formData.password !== formData.confirmPassword) newErrors.push("Passwords do not match")
+        if (!formData.username) newErrors.push("Username is required");
+        if (!formData.email) newErrors.push("Email is required");
+        if (!formData.password) newErrors.push("Password is required");
+        if (formData.password !== formData.confirmPassword) newErrors.push("Passwords do not match");
 
         if (newErrors.length > 0) {
-            setErrors(newErrors)
-        } else {
-            // Here you would typically send the form data to your backend
-            console.log('Form submitted:', formData)
-            // Reset form and errors after successful submission
-            setFormData({ name: '', email: '', password: '', confirmPassword: '' })
-            setErrors([])
+            setErrors(newErrors);
+            return;
         }
-    }
+
+        try {
+            await signup({ variables: { input: formData } });
+            window.location.href = '/';
+            setFormData({ username: '', email: '', password: '', confirmPassword: '' });
+            setErrors([]);
+        } catch (error) {
+            console.error('Signup error:', signupError);
+            toast({
+                title: "Error",
+                description: signupError?.message || "An unexpected error occurred.",
+                variant: 'destructive',
+            });
+        }
+    };
 
     return (
         <div className="min-h-screen bg-gray-900 text-white flex flex-col">
@@ -69,15 +85,15 @@ export default function SignupPage() {
 
                     <form onSubmit={handleSubmit} className="space-y-6">
                         <div className="space-y-2">
-                            <Label htmlFor="name">Name</Label>
+                            <Label htmlFor="username">Username</Label>
                             <Input
-                                id="name"
-                                name="name"
+                                id="username"
+                                name="username"
                                 type="text"
-                                value={formData.name}
+                                value={formData.username}
                                 onChange={handleChange}
                                 className="bg-gray-800 border-gray-700 text-white"
-                                placeholder="Enter your name"
+                                placeholder="Enter your username"
                             />
                         </div>
 
@@ -120,8 +136,8 @@ export default function SignupPage() {
                             />
                         </div>
 
-                        <Button type="submit" className="w-full bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-semibold">
-                            Sign Up
+                        <Button type="submit" className="w-full bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-semibold" disabled={loading}>
+                            {loading ? <Loader2 className='animate-spin size-5' /> : 'Sign Up'}
                         </Button>
                     </form>
 
@@ -138,5 +154,5 @@ export default function SignupPage() {
                 <p>&copy; {new Date().getFullYear()} Savoria. All rights reserved.</p>
             </footer>
         </div>
-    )
+    );
 }

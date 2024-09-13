@@ -4,28 +4,34 @@ import { useEffect, useState } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { Button } from './ui/button';
 import { DropdownMenuContent, DropdownMenuItem } from './ui/dropdown-menu';
+import { useMutation, useQuery } from '@apollo/client';
+import { GET_USER } from '@/graphql/queries/user.queries';
+import { LOGOUT } from '@/graphql/mutations/user.mutations';
+import { client } from '@/main';
 
-const useAuth = () => {
-    const [user, setUser] = useState<{ name: string; email: string } | null>(null);
 
-    useEffect(() => {
-        setUser({ name: 'John Doe', email: 'john@example.com' });
-    }, []);
-
-    return { user, logout: () => setUser(null) };
-};
 
 const Header = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [isScrolled, setIsScrolled] = useState(false);
-    const { user, logout } = useAuth();
-
+    const [logout] = useMutation(LOGOUT);
+        const { data } = useQuery(GET_USER);
     const toggleSidebar = () => {
         setIsSidebarOpen(!isSidebarOpen);
     };
 
     const closeSidebar = () => {
         setIsSidebarOpen(false);
+    };
+
+    const handlelogout = async () => {
+        try {
+            await logout(); 
+            window.location.href = '/login';
+            client.resetStore();
+        } catch (error) {
+            console.log("Error during logout:", error);
+        }
     };
 
     useEffect(() => {
@@ -49,32 +55,26 @@ const Header = () => {
                         <a href="#contact" className="hover:text-yellow-500 transition-colors">Contact</a>
                     </nav>
                     <div className="hidden md:flex items-center space-x-4">
-                        {user ? (
+                       
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                                         <Avatar className="h-8 w-8">
-                                            <AvatarImage src="https://i.pinimg.com/236x/dc/4a/a2/dc4aa2d94c7f32d281e8b28abbfa017c.jpg" alt={user.name} />
-                                            <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                                            <AvatarImage src="https://i.pinimg.com/236x/dc/4a/a2/dc4aa2d94c7f32d281e8b28abbfa017c.jpg" alt={data?.user.username} />
+                                            <AvatarFallback>{data?.user.username[0]}</AvatarFallback>
                                         </Avatar>
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent className="w-56" align="end" forceMount>
                                     <DropdownMenuItem className="flex-col items-start">
-                                        <div className="font-medium">{user.name}</div>
-                                        <div className="text-xs text-gray-500">{user.email}</div>
+                                        <div className="font-medium">{data?.user?.username}</div>
+                                        <div className="text-xs text-gray-500">{data?.user?.username}</div>
                                     </DropdownMenuItem>
-                                    <DropdownMenuItem onClick={logout}>
+                                    <DropdownMenuItem onClick={handlelogout}>
                                         Log out
                                     </DropdownMenuItem>
                                 </DropdownMenuContent>
                             </DropdownMenu>
-                        ) : (
-                            <>
-                                <Button variant="outline" className="text-yellow-500 hover:bg-yellow-400  transition-colors bg-transparent border-none"><a href="/login">Login</a></Button>
-                                <Button className="bg-yellow-500 text-gray-900 hover:bg-yellow-600 transition-colors"><a href="/signup">Sign up</a></Button>
-                            </>
-                        )}
                     </div>
                     <button className="md:hidden text-yellow-500" onClick={toggleSidebar}>
                         <Menu size={24} />
@@ -90,32 +90,27 @@ const Header = () => {
                     </button>
                 </div>
                 <nav className="flex flex-col items-center">
-                    {
-                        user && <>
+                   
+                        <>
                          <Avatar className="h-16 w-16 mx-auto mb-2">
-                                <AvatarImage src="https://i.pinimg.com/236x/dc/4a/a2/dc4aa2d94c7f32d281e8b28abbfa017c.jpg" alt={user.name} />
-                                <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                                <AvatarImage src="https://i.pinimg.com/236x/dc/4a/a2/dc4aa2d94c7f32d281e8b28abbfa017c.jpg" alt={data?.user.username} />
+                                <AvatarFallback>{data?.user.username[0]}</AvatarFallback>
                             </Avatar>
-                            <div className="font-medium">{user.name}</div>
-                            <div className="text-sm text-gray-400">{user.email}</div>
+                            <div className="font-medium">{data?.user.username}</div>
+                            <div className="text-sm text-gray-400">{data?.user.email}</div>
                         </>
-                    }
+                  
                     <div className='space-y-6 flex flex-col my-6 items-center'>
                     <a href="#home" className="text-xl hover:text-yellow-500 transition-colors" onClick={closeSidebar}>Home</a>
                     <a href="#products" className="text-xl hover:text-yellow-500 transition-colors" onClick={closeSidebar}>Products</a>
                     <a href="#promo" className="text-xl hover:text-yellow-500 transition-colors" onClick={closeSidebar}>Promo</a>
                     <a href="#about" className="text-xl hover:text-yellow-500 transition-colors" onClick={closeSidebar}>About</a>
                     <a href="#contact" className="text-xl hover:text-yellow-500 transition-colors" onClick={closeSidebar}>Contact</a></div>
-                    {user ? (
+                   
+                   
                         <div className="text-center">
-                            <Button variant={'default'} className="mt-2 bg-yellow-500" onClick={logout}>Log out</Button>
+                            <Button variant={'default'} className="mt-2 bg-yellow-500" onClick={handlelogout}>Log out</Button>
                         </div>
-                    ) : (
-                        <>
-                            <Button className="w-48 mb-4 bg-yellow-500 text-gray-900 hover:bg-yellow-600 transition-colors"><a href="/signup">Sign up</a></Button>
-                            <Button variant="outline" className="w-48 text-yellow-500 hover:bg-yellow-500 hover:text-gray-900 transition-colors"><a href="/login">Login</a></Button>
-                        </>
-                    )}
                 </nav>
             </div>
         </>
