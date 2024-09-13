@@ -15,7 +15,7 @@ export default function LoginPage() {
         password: '',
     });
     const [error, setError] = useState<string | null>(null);
-    const [login,{loading}] = useMutation(LOGIN,{refetchQueries:['GET_USER']});
+    const [login,{loading}] = useMutation(LOGIN);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
@@ -38,11 +38,11 @@ export default function LoginPage() {
           await login({ variables: { input: formData } });
           window.location.href = '/';
                 setFormData({ email: '', password: '' });
-        } catch (error) {
-            console.error('Login error:', error);
+        } catch (error:any) {
+            console.log('Login error:', error);
             toast({
-                title: "Error",
-                description: 'Incorrect credentials',
+                title: "Faliure",
+                description: error.message,
                 variant: 'destructive'
             });
         }

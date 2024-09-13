@@ -28,6 +28,7 @@ const Header = () => {
         try {
             await logout(); 
             window.location.href = '/login';
+
             client.resetStore();
         } catch (error) {
             console.log("Error during logout:", error);
@@ -60,7 +61,7 @@ const Header = () => {
                                 <DropdownMenuTrigger asChild>
                                     <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                                         <Avatar className="h-8 w-8">
-                                            <AvatarImage src="https://i.pinimg.com/236x/dc/4a/a2/dc4aa2d94c7f32d281e8b28abbfa017c.jpg" alt={data?.user.username} />
+                                            <AvatarImage src="https://i.pinimg.com/236x/65/a2/9e/65a29e469fd6cb31c4558adccd8df3b7.jpg" alt={data?.user.username} />
                                             <AvatarFallback>{data?.user.username[0]}</AvatarFallback>
                                         </Avatar>
                                     </Button>
@@ -93,7 +94,7 @@ const Header = () => {
                    
                         <>
                          <Avatar className="h-16 w-16 mx-auto mb-2">
-                                <AvatarImage src="https://i.pinimg.com/236x/dc/4a/a2/dc4aa2d94c7f32d281e8b28abbfa017c.jpg" alt={data?.user.username} />
+                                <AvatarImage src="https://i.pinimg.com/236x/65/a2/9e/65a29e469fd6cb31c4558adccd8df3b7.jpg" alt={data?.user.username} />
                                 <AvatarFallback>{data?.user.username[0]}</AvatarFallback>
                             </Avatar>
                             <div className="font-medium">{data?.user.username}</div>

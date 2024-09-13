@@ -19,7 +19,7 @@ export default function SignupPage() {
     });
     const [errors, setErrors] = useState<string[]>([]);
     
-    const [signup, { loading, error: signupError }] = useMutation(SIGNUP,{refetchQueries:['GET_USER']});
+    const [signup, { loading, error: signupError }] = useMutation(SIGNUP);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
@@ -45,13 +45,13 @@ export default function SignupPage() {
 
         try {
             await signup({ variables: { input: formData } });
-            window.location.href = '/';
+            window.location.href = `/verify/${formData?.email}`;
             setFormData({ username: '', email: '', password: '', confirmPassword: '' });
             setErrors([]);
         } catch (error) {
-            console.error('Signup error:', signupError);
+            console.log('Signup error:', signupError);
             toast({
-                title: "Error",
+                title: "Faliure",
                 description: signupError?.message || "An unexpected error occurred.",
                 variant: 'destructive',
             });
