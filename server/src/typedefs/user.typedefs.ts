@@ -1,9 +1,13 @@
 const userTypeDefs = `#graphql
+scalar DateTime
 type User {
     id:ID!
     username: String!
     email: String!
     password:String!
+    verificationCode: String!
+    isVerified:       Boolean  !
+    verifyCodeExpiry: DateTime!
   }
 
 type Query {
@@ -11,7 +15,8 @@ type Query {
 }
 
 type Mutation {
-    signup(input:SignupInput):User!
+    signup(input:SignupInput):LoginResponse!
+    verifyEmail(input:verifyEmailInput):User!
     login(input:LoginInput):User!
     logout:LogoutResponse!
 }
@@ -28,9 +33,17 @@ input LoginInput {
     password:String!
 }
 
+input verifyEmailInput {
+    email: String!
+    verificationCode:String!
+}
+
 type LogoutResponse {
+    message:String!
+}
+type LoginResponse {
     message:String!
 }
 `;
 
-export default userTypeDefs
+export default userTypeDefs;

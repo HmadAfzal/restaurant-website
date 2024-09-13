@@ -2,14 +2,18 @@ import prisma from "../db/prisma.js";
 import bcrypt from "bcryptjs";
 import genJwtToken from "../utils/genjJwtToken.js";
 import jwt, { JwtPayload } from "jsonwebtoken";
+import { GraphQLDateTime } from "graphql-scalars";
+import { sendVerificationEmail } from "../utils/sendVerificationEmail.js";
 
 interface DecodedToken extends JwtPayload {
   id: string;
 }
 
 const userResolvers = {
+  DateTime: GraphQLDateTime,
+
   Query: {
-    user: async (_, args, { req, res }) => {
+    user: async (_, args, { req }) => {
       try {
         const token = req.cookies?.jwt;
         if (!token) {
@@ -41,43 +45,98 @@ const userResolvers = {
     },
   },
   Mutation: {
-    signup: async (_, { input }, { res }) => {
+    signup: async (_, { input }) => {
       try {
         const { username, email, password, confirmPassword } = input;
-
         if (!username || !email || !password || !confirmPassword) {
           throw new Error("Please fill all the required fields");
         }
 
-        const emailexists = await prisma.user.findUnique({ where: { email } });
-        if (emailexists) {
+        const existingUserByEmail = await prisma.user.findUnique({
+          where: { email },
+        });
+
+        if (existingUserByEmail && existingUserByEmail.isVerified) {
           throw new Error("User with this email already exists");
         }
+
         if (password !== confirmPassword) {
           throw new Error("Passwords don't match");
         }
 
-        const hashedPassword = await bcrypt.hash(password, 10);
+        const verifyCode = Math.floor(
+          100000 + Math.random() * 900000
+        ).toString();
+        const expiryDate = new Date(Date.now() + 3600000);
 
-        const newUser = await prisma.user.create({
-          data: {
-            email,
-            username,
-            password: hashedPassword,
-          },
-        });
+        let newUser;
 
-        if (newUser) {
-          await genJwtToken(newUser.id, res);
-
-          return newUser;
+        if (existingUserByEmail) {
+          newUser = await prisma.user.update({
+            where: { email },
+            data: {
+              password: await bcrypt.hash(password, 10),
+              verificationCode: verifyCode,
+              verifyCodeExpiry: expiryDate,
+            },
+          });
         } else {
-          throw new Error("Error signing up");
+          newUser = await prisma.user.create({
+            data: {
+              email,
+              username,
+              password: await bcrypt.hash(password, 10),
+              verificationCode: verifyCode,
+              verifyCodeExpiry: expiryDate,
+            },
+          });
         }
+// console.log('sending email')
+//         const emailResponse = await sendVerificationEmail(email, username, verifyCode);
+//         if (!emailResponse.success) {
+//           throw new Error("Error sending verification code");
+//         }
+
+        return {
+          message: "User registered successfully. Please verify your account.",
+        };
       } catch (error) {
-        console.log(error);
-        throw new Error(error);
+        console.log("Signup error:", error);
+        throw new Error(error.message || "Error signing up");
       }
+    },
+
+    verifyEmail: async (_, { input }, { req, res }) => {
+     try {
+       const { email, verificationCode } = input;
+       if (!email || !verificationCode) {
+         throw new Error("Missing required query parameters");
+       }
+ 
+       const user = await prisma.user.findUnique({ where: { email } });
+       if (!user) {
+         throw new Error("User not found");
+       }
+ 
+       const isCodeValid = user.verificationCode == verificationCode;
+       const isCodeNotExpired = new Date(user.verifyCodeExpiry) > new Date();
+ 
+       if (isCodeValid && isCodeNotExpired) {
+         const updatedUser = prisma.user.update({
+           where: { email },
+           data: {
+             isVerified: true,
+           },
+         });
+         genJwtToken(user.id,res)
+         return updatedUser;
+       } else {
+         throw new Error("Error verifying user - please signup again");
+       }
+     } catch (error) {
+      console.log(error);
+      throw new Error(error);
+     }
     },
 
     login: async (_, { input }, { res }) => {
@@ -89,6 +148,9 @@ const userResolvers = {
         const user = await prisma.user.findUnique({ where: { email } });
         if (!user) {
           throw new Error("Incorrect email");
+        }
+        if(user.isVerified==false){
+          throw new Error("Please verify your account first");
         }
 
         const isPasswordCorrect = await bcrypt.compare(password, user.password);
