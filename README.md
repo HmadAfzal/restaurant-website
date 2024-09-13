@@ -95,7 +95,7 @@ The frontend should now be available at http://localhost:5173, and the backend A
 ![App Screenshot](/client/public/landing.png)
 ![App Screenshot](/client/public/signup.png)
 ![App Screenshot](/client/public/login.png)
-![App Screenshot](/client/public/login.png)
+![App Screenshot](/client/public/verify.png)
 ![App Screenshot](/client/public/sidebar.png)
 
 
